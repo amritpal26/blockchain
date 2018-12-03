@@ -4,8 +4,12 @@ import (
 	"work_queue"
 )
 
+// Implements work_queue.Worker
 type miningWorker struct {
-	// TODO. Should implement work_queue.Worker
+	work_queue.Worker
+	MinRange uint64
+	MaxRange uint64
+	TestBlock Block
 }
 
 type MiningResult struct {
@@ -13,11 +17,62 @@ type MiningResult struct {
 	Found bool   // true if valid proof-of-work was found.
 }
 
+func (worker miningWorker) Run() interface{} {
+
+	result := new(MiningResult)
+	result.Found = false
+
+	for i := worker.MinRange; i <= worker.MaxRange; i++{
+
+		block := worker.TestBlock
+		block.SetProof(i)
+
+		if(block.ValidHash()){
+			result.Found = true
+			result.Proof = i
+			return *result
+		}
+	}
+
+	result.Proof = 1
+	return *result
+}
+
 // Mine the range of proof values, by breaking up into chunks and checking
 // "workers" chunks concurrently in a work queue. Should return shortly after a result
 // is found.
 func (blk Block) MineRange(start uint64, end uint64, workers uint64, chunks uint64) MiningResult {
-	// TODO
+	miningResult := new(MiningResult)
+	queue := work_queue.Create(uint(workers), uint(chunks))
+	chunkInterval := end / chunks
+
+
+	for i := uint64(0); i < workers; i++{
+
+		miner := new(miningWorker)
+		miner.TestBlock = blk
+		miner.MinRange = i * chunkInterval
+		if (chunkInterval < end){
+			miner.MaxRange = end
+		}else{
+			miner.MaxRange = (i + 1) * chunkInterval
+		}
+
+		queue.Enqueue(miner)	
+	}
+
+	for i := uint64(0); i < workers; i++{
+		result := <- queue.Results
+		
+		*miningResult = result.(MiningResult)
+
+		if miningResult.Found {
+			queue.Shutdown()
+			return *miningResult
+		}
+	}
+
+	return *miningResult
 }
 
 // Call .MineRange with some reasonable values that will probably find a result.

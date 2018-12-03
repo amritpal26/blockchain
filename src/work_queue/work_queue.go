@@ -1,8 +1,8 @@
 package work_queue
 
-// import (
-// 	"fmt"
-// )
+import (
+	// "fmt"
+)
 
 type Worker interface {
 	Run() interface{}
@@ -15,9 +15,9 @@ type WorkQueue struct {
 }
 
 // Create a new work queue capable of doing nWorkers simultaneous tasks, expecting to queue maxJobs tasks.
+	// initialize struct; start nWorkers workers as goroutines
 func Create(nWorkers uint, maxJobs uint) *WorkQueue {
 	q := new(WorkQueue)
-	// TODO: initialize struct; start nWorkers workers as goroutines
 	q.Jobs = make(chan Worker, maxJobs)
 	q.Results = make(chan interface{}, maxJobs)
 	q.StopRequest = make(chan int, maxJobs)
@@ -29,15 +29,16 @@ func Create(nWorkers uint, maxJobs uint) *WorkQueue {
 }
 
 // A worker goroutine that processes tasks from .Jobs unless .StopRequests has a message saying to halt now.
+	// Listen on the .Jobs channel for incoming tasks. For each task...
+	// run tasks by calling .Run(),
+	// send the return value back on Results channel.
+	// Exit (return) when .Jobs is closed.
 func (queue WorkQueue) worker() {
-	// TODO: Listen on the .Jobs channel for incoming tasks. For each task...
-	// TODO: run tasks by calling .Run(),
-	// TODO: send the return value back on Results channel.
-	// TODO: Exit (return) when .Jobs is closed.
-
 	run := true
 	for run{
+		// fmt.Println("listening for new jobs")
 		job := <- queue.Jobs
+		// fmt.Println("Got a new jobs")
 		queue.Results <- job.Run() 
 		if len(queue.StopRequest) > 0{
 			run = false
@@ -46,12 +47,12 @@ func (queue WorkQueue) worker() {
 	}
 }
 
+// put the work into the Jobs channel so a worker can find it and start the task.
 func (queue WorkQueue) Enqueue(work Worker) {
-	// TODO: put the work into the Jobs channel so a worker can find it and start the task.
 	queue.Jobs <- work
 }
 
+// close .Jobs and remove all remaining jobs from the channel.
 func (queue WorkQueue) Shutdown() {
-	// TODO: close .Jobs and remove all remaining jobs from the channel.
 	queue.StopRequest <- 1 
 }
