@@ -79,5 +79,48 @@ func TestBlockChainAdditionFail(t *testing.T) {
 	b0 := Initial(8)
 	b0.SetProof(67)
 
-	assert.Panics(t, func(){blockchain.Add(b0)}, "Insert a valid block in the chain")
+	assert.Panics(t, func(){blockchain.Add(b0)}, "Insert a valid initial block in the chain")
 }
+
+func TestBlockChainAdditionFail2(t *testing.T) {
+	blockchain := new(Blockchain)
+
+	b0 := Initial(16)
+	b0.SetProof(56231)
+
+	assert.NotPanics(t, func(){blockchain.Add(b0)}, "Insert a valid initial block in the chain")
+
+	b1 := b0.Next("This is the second message")
+	assert.Panics(t, func(){blockchain.Add(b1)}, "Insert a valid second block in the chain")
+}
+
+func TestBlockChainAdditionPass(t *testing.T) {
+	blockchain := new(Blockchain)
+
+	b0 := Initial(16)
+	b0.SetProof(56231)
+
+	assert.NotPanics(t, func(){blockchain.Add(b0)}, "Insert a valid initial block in the chain")
+
+	b1 := b0.Next("this is an interesting message")
+	b1.Mine(1)
+	assert.NotPanics(t, func(){blockchain.Add(b1)}, "Insert a valid second block in the chain")
+}
+
+func TestBlockchainValidity(t *testing.T){
+	blockchain := new(Blockchain)
+
+	b0 := Initial(16)
+	b0.Mine(1)
+	b1 := b0.Next("this is an interesting message")
+	b1.Mine(1)
+	b2 := b1.Next("this is another interesting message")
+	b2.Mine(1)
+
+	blockchain.Add(b0)
+	blockchain.Add(b1)
+	blockchain.Add(b2)
+
+	assert.True(t, blockchain.IsValid(), "Blockchain isn't valid")
+}
+

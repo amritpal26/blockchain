@@ -29,26 +29,26 @@ func (chain Blockchain) IsValid() bool {
 		prevDifficulty := initial.Difficulty
 		prevGeneration := initial.Generation
 
-		for i:=0; i < len; i++{
-			if (!initial.ValidHash() || initial.Generation != 0 || hex.EncodeToString(initial.PrevHash) != "00000000000000000000000000000000"){
+		if hex.EncodeToString(initial.PrevHash) != "0000000000000000000000000000000000000000000000000000000000000000" {
+			return false
+		}
+		if (!initial.ValidHash() || initial.Generation != 0){
+			return false
+		}
+		if (!bytes.Equal(initial.CalcHash(), initial.Hash)){
+			return false
+		}
+
+		for i := 1; i < len; i++{
+			blk := ch[i]
+			if (!bytes.Equal(blk.PrevHash, prevHash) || blk.Generation != prevGeneration + 1){
 				return false
-			}
-	
-			if (bytes.Equal(initial.CalcHash(), initial.Hash)){
+			}else if (blk.Difficulty != prevDifficulty || !bytes.Equal(blk.CalcHash(), blk.Hash) || !blk.ValidHash() ){
 				return false
-			}
-	
-			for i := 0; i < len; i++{
-				blk := ch[i]
-				if (bytes.Equal(blk.PrevHash, prevHash) || blk.Generation != prevGeneration + 1){
-					return false
-				}else if (blk.Difficulty != prevDifficulty || bytes.Equal(blk.CalcHash(), blk.Hash) || !blk.ValidHash() ){
-					return false
-				}else{
-					prevHash = blk.Hash
-					prevDifficulty = blk.Difficulty
-					prevGeneration = blk.Generation
-				}
+			}else{
+				prevHash = blk.Hash
+				prevDifficulty = blk.Difficulty
+				prevGeneration = blk.Generation
 			}
 		}
 	}
@@ -56,12 +56,3 @@ func (chain Blockchain) IsValid() bool {
 	return true
 }
 
-// func (blk Block) isInitialBlock() bool {
-// 	prevHash = blk.prevHash
-// 	make 
-// 	if (prevHash == make )
-
-
-
-// 	return false
-// }
